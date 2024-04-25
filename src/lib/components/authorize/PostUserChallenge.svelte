@@ -96,9 +96,11 @@
     );
   }
   const THRESHOLD_SIMILARITY = 0.5;
+  let secureMode = false;
   const simulateSecure = async () => {
     selectedFace = expected.faceStyle;
     selectedGesture = expected.secureGesture;
+    secureMode = true;
     await solvePostNameChallenge();
   };
 
@@ -134,7 +136,7 @@
     } else {
       challengeResult({
         authorized: true,
-        mode: { secure: matchedGesture === "secureGesture" },
+        mode: { secure: secureMode || matchedGesture === "secureGesture" },
       });
     }
   };
