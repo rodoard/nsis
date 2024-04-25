@@ -229,15 +229,16 @@
     <Select class="mt-2" items={devices} bind:value={selectedDevice} />
   </Label>
 
-  <Label class="mb-8">
-    Select security protocol
-    <Select
-      class="mt-2"
-      items={securityProtocols}
-      bind:value={securityProtocol}
-    />
-  </Label>
-
+  {#if section === "secure_gesture"}
+    <Label class="mb-8">
+      Select security protocol
+      <Select
+        class="mt-2"
+        items={securityProtocols}
+        bind:value={securityProtocol}
+      />
+    </Label>
+  {/if}
   {#if !webcamSupported}
     <Alert color="red">
       <span class="font-medium">Whoops!</span>

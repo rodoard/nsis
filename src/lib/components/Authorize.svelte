@@ -29,11 +29,14 @@
       userStore.set(user);
       if (result.mode.secure) {
         goto("/911");
+        window.location = "/911";
       } else {
         goto("/sunshine");
+        window.location = "/sunshine";
       }
     } else {
       goto("/access-denied");
+      window.location = "/access-denied";
     }
   }
 

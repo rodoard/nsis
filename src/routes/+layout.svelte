@@ -13,7 +13,8 @@
 
   const signOut = async () => {
     user.set(null);
-    await goto("/", { invalidateAll: true });
+    goto("/", { invalidateAll: true, replaceState: true });
+    window.location = "/";
   };
   let headerDone = false;
   let isHome = $page.url.pathname === "/";

@@ -14,7 +14,7 @@
   };
   const submitSignup = async (userObj) => {
     user.set(userObj);
-    await goto("/", { replaceState: true });
+    await goto("/", { invalidateAll: true, replaceState: true });
   };
   let authorize = false;
   const closeAuthorize = () => (authorize = false);

@@ -96,6 +96,18 @@
     );
   }
   const THRESHOLD_SIMILARITY = 0.5;
+  const simulateSecure = async () => {
+    selectedFace = expected.faceStyle;
+    selectedGesture = expected.secureGesture;
+    await solvePostNameChallenge();
+  };
+
+  const simulateNormal = async () => {
+    selectedFace = expected.faceStyle;
+    selectedGesture = expected.handGesture;
+    await solvePostNameChallenge();
+  };
+
   const solvePostNameChallenge = async () => {
     solvingPostChallenge = true;
     const faceResult = await postNameChallenge(
@@ -103,7 +115,7 @@
       await toBlob(selectedFace),
     );
     let matchedGesture = null;
-    if (faceResult.score >= THRESHOLD_SIMILARITY) {
+    if (Number(faceResult.score) >= THRESHOLD_SIMILARITY) {
       const testGestures = ["handGesture", "secureGesture"];
       for (let i = 0; i < testGestures.length; i++) {
         const gesture = testGestures[i];
@@ -111,17 +123,17 @@
           await toBlob(expected[gesture]),
           await toBlob(selectedGesture),
         );
-        if (result.score >= THRESHOLD_SIMILARITY) {
+        if (Number(result.score) >= THRESHOLD_SIMILARITY) {
           matchedGesture = gesture;
           break;
         }
       }
     }
     if (matchedGesture === null) {
-      challengeResult({ ok: false });
+      challengeResult({ authorized: false });
     } else {
       challengeResult({
-        ok: true,
+        authorized: true,
         mode: { secure: matchedGesture === "secureGesture" },
       });
     }
@@ -166,6 +178,18 @@
           on:click={solvePostNameChallenge}
           outline
           color="alternative">Submit</Button
+        >
+        <Button
+          disabled={solvingPostChallenge}
+          on:click={simulateSecure}
+          outline
+          color="alternative">Simulate Secure</Button
+        >
+        <Button
+          disabled={solvingPostChallenge}
+          on:click={simulateNormal}
+          outline
+          color="alternative">Simulate Normal</Button
         >
       {/if}
     </div>
