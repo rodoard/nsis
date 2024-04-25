@@ -11,7 +11,7 @@
   const animateSubText = (nodes) => {
     setTimeout(() => {
       fadeOutSubText(nodes);
-    }, welcomeText.length * 550); // Wait for main text animation to complete before showing subtext
+    }, welcomeText.length * 370);
   };
 
   const hideSubTextChar = (node) => {

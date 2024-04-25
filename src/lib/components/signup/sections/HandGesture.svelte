@@ -1,7 +1,7 @@
 <script>
   import {
     Label,
-    GradientButton,
+    Button,
     Alert,
     Select,
     Card,
@@ -9,16 +9,22 @@
     Spinner,
   } from "flowbite-svelte";
 
+  import { slide } from "svelte/transition";
+
   import {
     GestureRecognizer,
     DrawingUtils,
     FilesetResolver,
   } from "@mediapipe/tasks-vision";
-  import colorTask from "../../../../mediapipe/fs_color_sketch.task";
+
   import { onDestroy, onMount } from "svelte";
 
-  export let formGet, formPut;
+  export let formGet, formDone, formPut, section;
 
+  const title =
+    section === "hand_gesture"
+      ? "Wecam hand gesture"
+      : "Webcam secure hand gesture ";
   const demosSection = document.getElementById("demos");
 
   let devices = ["CPU", "GPU"].map((d) => ({ name: d, value: d }));
@@ -28,6 +34,8 @@
   let gestureRecognizer;
   let selectedDevice = devices[0].name;
   let runningMode = "IMAGE";
+
+  onDestroy(() => formDone(section));
 
   const createGestureRecognizer = async () => {
     const vision = await FilesetResolver.forVisionTasks(
@@ -41,7 +49,6 @@
       },
       runningMode: runningMode,
     });
-    demosSection.classList.remove("invisible");
   };
   createGestureRecognizer();
 
@@ -50,23 +57,10 @@
   }
 
   let video = null;
+  let canvas;
   let videoTrack = null;
-  let canvasElement = null;
-  let canvasCtx = null;
-  let handGestureImg;
+  let capturedImg;
 
-  const canvasCtxPut = (imageInfo) => {
-    if (imageInfo) {
-      const { width, height, data } = imageInfo.image;
-      canvasElement.width = width;
-      canvasElement.height = height;
-      canvasCtx.putImageData(data, 0, 0);
-    }
-  };
-  onMount(() => {
-    canvasCtx = canvasElement.getContext("2d");
-    canvasCtxPut(formGet("faceStyle"));
-  });
   // Check if webcam access is supported.
   function hasGetUserMedia() {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -78,7 +72,7 @@
   }
 
   let camButtonDisabled = false;
-  // Enable the live webcam view.
+  let videoStarted = false;
   function enableCam(event) {
     if (webcamRunning === true) {
       camButtonDisabled = true;
@@ -88,7 +82,7 @@
       setTimeout(predictWebcam, 100);
     } else {
       webcamRunning = true;
-      webcamButtonText = "Pause and Stylize";
+      webcamButtonText = "Pause to capture gesture";
       if (video.paused && video.played.length > 0) {
         video.play();
       } else {
@@ -97,12 +91,68 @@
           .then(function (stream) {
             video.srcObject = stream;
             videoTrack = stream.getVideoTracks()[0];
+            setTimeout(() => (videoStarted = true), 300);
           });
       }
     }
   }
+  let capturedImgDetails;
+  let gestureError = "";
 
+  function setCapturedImage() {
+    const saved = formGet(section);
+    if (!saved) return;
+    const { width, height, src } = saved.image;
+    capturedImg.width = width;
+    capturedImg.height = height;
+    capturedImg.src = src;
+    const { handedness, categoryName, categoryScore } = saved;
+    const results = saved.results;
+    capturedImgDetails.innerText = `GestureRecognizer: ${categoryName}\n Confidence: ${categoryScore}%\n Handedness: ${handedness}`;
+    capturedImgDetails.style =
+      "left: 0px;" +
+      "top: " +
+      height +
+      "px; " +
+      "width: " +
+      (width - 10) +
+      "px;";
+
+    const canvas = document.createElement("canvas");
+    canvas.setAttribute("class", "canvas");
+    canvas.setAttribute("width", capturedImg.naturalWidth + "px");
+    canvas.setAttribute("height", capturedImg.naturalHeight + "px");
+    canvas.style =
+      "position:absolute;" +
+      "left: 0px;" +
+      "top: 0px;" +
+      "width: " +
+      width +
+      "px;" +
+      "height: " +
+      height +
+      "px;";
+
+    capturedImg.parentNode.appendChild(canvas);
+    const canvasCtx = canvas.getContext("2d");
+    const drawingUtils = new DrawingUtils(canvasCtx);
+    for (const landmarks of results.landmarks) {
+      drawingUtils.drawConnectors(
+        landmarks,
+        GestureRecognizer.HAND_CONNECTIONS,
+        {
+          color: "#00FF00",
+          lineWidth: 5,
+        },
+      );
+      drawingUtils.drawLandmarks(landmarks, {
+        color: "#FF0000",
+        lineWidth: 1,
+      });
+    }
+  }
   async function captureGesture(event) {
+    gestureError = "";
     if (!gestureRecognizer) {
       alert("Please wait for gestureRecognizer to load");
       return;
@@ -114,136 +164,134 @@
       const n = allCanvas[i];
       n.parentNode.removeChild(n);
     }
-
     const results = gestureRecognizer.recognize(event.target);
 
     // View results in the console to see their format
-    console.log(results);
     if (results.gestures.length > 0) {
-      const p = event.target.parentNode.childNodes[3];
-      p.setAttribute("class", "info");
-
+      const { width, height, src } = event.target;
       const categoryName = results.gestures[0][0].categoryName;
       const categoryScore = parseFloat(
         results.gestures[0][0].score * 100,
       ).toFixed(2);
       const handedness = results.handednesses[0][0].displayName;
-
-      p.innerText = `GestureRecognizer: ${categoryName}\n Confidence: ${categoryScore}%\n Handedness: ${handedness}`;
-      p.style =
-        "left: 0px;" +
-        "top: " +
-        event.target.height +
-        "px; " +
-        "width: " +
-        (event.target.width - 10) +
-        "px;";
-
-      const canvas = document.createElement("canvas");
-      canvas.setAttribute("class", "canvas");
-      canvas.setAttribute("width", event.target.naturalWidth + "px");
-      canvas.setAttribute("height", event.target.naturalHeight + "px");
-      canvas.style =
-        "left: 0px;" +
-        "top: 0px;" +
-        "width: " +
-        event.target.width +
-        "px;" +
-        "height: " +
-        event.target.height +
-        "px;";
-
-      event.target.parentNode.appendChild(canvas);
-      const canvasCtx = canvas.getContext("2d");
-      const drawingUtils = new DrawingUtils(canvasCtx);
-      for (const landmarks of results.landmarks) {
-        drawingUtils.drawConnectors(
-          landmarks,
-          GestureRecognizer.HAND_CONNECTIONS,
-          {
-            color: "#00FF00",
-            lineWidth: 5,
-          },
-        );
-        drawingUtils.drawLandmarks(landmarks, {
-          color: "#FF0000",
-          lineWidth: 1,
-        });
-      }
+      formPut(section, {
+        securityProtocol,
+        handedness,
+        categoryName,
+        categoryScore,
+        results: { landmarks: results.landmarks },
+        image: {
+          width,
+          height,
+          src,
+        },
+      });
+      setCapturedImage();
+    } else {
+      gestureError =
+        "No gesture found, be sure to make gestures with your hand in front of the camera.";
     }
   }
-
-  let lastVideoTime = -1;
+  let showCapturedHelper = false;
+  const securityProtocols = [{ name: "911", value: "911" }];
+  let securityProtocol = securityProtocols[0].value;
 
   async function predictWebcam() {
-    const startTimeMs = performance.now();
-    const callback = (image) => {
-      if (image) {
-        const { width, height } = image;
-        const data = image.getAsImageData();
-        var canvas = document.createElement("canvas");
-        var ctx = canvas.getContext("2d");
-        canvas.width = imagedata.width;
-        canvas.height = imagedata.height;
-        ctx.putImageData(imagedata, 0, 0);
-        handGestureImg.width = widht;
-        handGestureImg.height = height;
-        handGestureImg.src = canvas.toDataURL();
-        camButtonDisabled = false;
-      }
-    };
+    gestureError = "";
+    capturedImgDetails.innerText = "";
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageDataURL = canvas.toDataURL("image/png");
+    capturedImg.width = 256;
+    capturedImg.height = 256;
+    capturedImg.src = imageDataURL;
+    camButtonDisabled = false;
+    showCapturedHelper = true;
   }
-
+  onMount(() => {
+    setCapturedImage();
+  });
   onDestroy(() => {
     videoTrack && videoTrack.stop();
   });
+  $: disableCaptureGesture = capturedImgDetails
+    ? capturedImgDetails.innerText.length > 0
+    : false;
 </script>
 
 <Card size="lg" class="h-full">
-  <Label class="text-center mb-8">Webcam hand gesture</Label>
+  <Label class="text-center mb-8">{title}</Label>
   <Label class="mb-8">
     Select device
     <Select class="mt-2" items={devices} bind:value={selectedDevice} />
   </Label>
-  {#if webcamSupported}
-    <Helper class="text-sm mb-2 ">
-      <p class="mb-2 text-center">
-        Use your hand to make gestures in front of the camera to capture your
-        gesture.
-      </p>
-    </Helper>
-  {:else}
+
+  <Label class="mb-8">
+    Select security protocol
+    <Select
+      class="mt-2"
+      items={securityProtocols}
+      bind:value={securityProtocol}
+    />
+  </Label>
+
+  {#if !webcamSupported}
     <Alert color="red">
       <span class="font-medium">Whoops!</span>
       Webcam is not supported, please enable webcam to continue.
     </Alert>
   {/if}
   {#if webcamSupported}
-    <div class="grid grid-cols-1 mt-2 items-center gap-4">
-      <div class="grid grid-cols-2 place-content-between gap-4 h-full">
-        <div class="grid">
-          <div></div>
-          <div>
-            {#if camButtonDisabled}
-              <GradientButton outline color="greenToBlue">
-                <Spinner class="me-3" size="4" color="white" />
-                Styling...
-              </GradientButton>
-            {:else}
-              <GradientButton outline color="greenToBlue" on:click={enableCam}>
-                {webcamButtonText}
-              </GradientButton>
-            {/if}
-          </div>
-        </div>
-        <div class="grow">
-          <video width="256" he bind:this={video} autoplay playsinline>
-            <track kind="captions" />
-          </video>
-        </div>
+    {#if camButtonDisabled}
+      <Button outline color="light">
+        <Spinner class="me-3" size="4" color="white" />
+        Styling...
+      </Button>
+    {:else}
+      <Button outline color="light" on:click={enableCam}>
+        {webcamButtonText}
+      </Button>
+    {/if}
+    <div class="grid grid-cols-2 place-content-between mt-4">
+      <div>
+        <video width="256" bind:this={video} autoplay playsinline>
+          <track kind="captions" />
+        </video>
+        {#if videoStarted}
+          <Helper transition={slide} class="text-sm mb-2 ">
+            <p class="-ml-12 text-center">
+              Use your hand to make gestures in front<br /> of the camera
+            </p>
+          </Helper>
+        {/if}
       </div>
-      <div class="flex justify-center">
-        <img bind:this={handGestureImg} alt="" on:click={captureGesture} />
+      <div class="relative">
+        <button disabled={disableCaptureGesture} on:click={captureGesture}>
+          <div class="relative">
+            <img
+              disabled={disableCaptureGesture}
+              width="256"
+              bind:this={capturedImg}
+              alt=""
+            />
+          </div>
+          {#if showCapturedHelper}
+            <Helper class="text-sm mb-2 ">
+              <p class="mb-2 text-center">Click image to capture gesture</p>
+            </Helper>
+          {/if}
+          {#if gestureError.length}
+            <Helper class="text-sm mb-2 ">
+              <p class="mb-2 text-center">
+                {gestureError}
+              </p>
+            </Helper>
+          {/if}
+          <p class="text-sm" bind:this={capturedImgDetails} />
+        </button>
       </div>
     </div>
   {/if}

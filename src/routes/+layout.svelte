@@ -4,26 +4,29 @@
   import "./styles.css";
   import { setContext } from "svelte";
   import { writable } from "svelte/store";
-
-  export let data;
+  import { goto } from "$app/navigation";
+  import { page } from "$app/stores";
 
   const user = writable(null);
-  $: user.set(data.user || null);
 
   setContext("user", user);
 
-  const signOut = () => {
-    setContext("user", null);
+  const signOut = async () => {
+    user.set(null);
+    await goto("/", { invalidateAll: true });
   };
   let headerDone = false;
+  let isHome = $page.url.pathname === "/";
   const setHeaderDone = () => (headerDone = true);
 </script>
 
 <div class="app">
   <Navbar {signOut} />
-  <Header {setHeaderDone} />
+  {#if isHome}
+    <Header {setHeaderDone} />
+  {/if}
   <main>
-    {#if headerDone}
+    {#if headerDone || !isHome}
       <slot />
     {/if}
   </main>

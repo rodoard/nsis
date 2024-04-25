@@ -3,6 +3,8 @@
   import { getContext } from "svelte";
   import Home from "../lib/components/Home.svelte";
   import SignupModal from "../lib/components/SignupModal.svelte";
+  import { goto } from "$app/navigation";
+  import Authorize from "../lib/components/Authorize.svelte";
 
   const user = getContext("user");
   let isLoggedIn = $user !== null;
@@ -10,24 +12,39 @@
   const showSignup = (show) => {
     signup = show;
   };
+  const submitSignup = async (userObj) => {
+    user.set(userObj);
+    await goto("/", { replaceState: true });
+  };
+  let authorize = false;
+  const closeAuthorize = () => (authorize = false);
+
+  const secureAccess = () => {
+    authorize = true;
+  };
 </script>
 
 <div class="mt-36 w-full col-auto">
   {#if !isLoggedIn}
-    <div class="text-center">
-      <Button color="green">Login</Button>
-      <Helper class="text-sm mt-2">
-        Don't have an acount? <button
-          on:click={() =>
-            showSignup(true) && console.log("showsignup!!!", showSignup)}
-          class="font-medium text-primary-600"
+    {#if authorize}
+      <Authorize {authorize} {closeAuthorize} />
+    {:else}
+      <div class="text-center">
+        <Button on:click={secureAccess} outline color="light"
+          >Secure Access</Button
         >
-          Sign up.
-        </button>
-      </Helper>
-    </div>
-    <SignupModal {signup} {showSignup} />
+        <Helper class="text-sm mt-2">
+          Don't have an acount? <button
+            on:click={() => showSignup(true)}
+            class="font-medium text-primary-600"
+          >
+            Create credential
+          </button>
+        </Helper>
+      </div>
+      <SignupModal {submitSignup} {signup} {showSignup} />
+    {/if}
   {:else}
-    <Home />
+    <Home user={$user} />
   {/if}
 </div>

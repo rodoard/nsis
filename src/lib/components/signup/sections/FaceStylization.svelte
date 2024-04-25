@@ -1,7 +1,7 @@
 <script>
   import {
     Label,
-    GradientButton,
+    Button,
     Alert,
     Select,
     Card,
@@ -13,11 +13,13 @@
   import colorTask from "../../../../mediapipe/fs_color_sketch.task";
   import { onDestroy, onMount } from "svelte";
 
-  export let formGet, formPut;
+  export let formGet, formDone, formPut, section;
 
   const demosSection = document.getElementById("demos");
 
   let styles = [{ name: "Color Sketch", value: colorTask }];
+
+  onDestroy(() => formDone(section));
 
   let selectedStyle = colorTask;
   let faceStylizer;
@@ -59,7 +61,7 @@
   };
   onMount(() => {
     canvasCtx = canvasElement.getContext("2d");
-    canvasCtxPut(formGet("faceStyle"));
+    canvasCtxPut(formGet(section));
   });
   // Check if webcam access is supported.
   function hasGetUserMedia() {
@@ -116,8 +118,9 @@
             data,
           },
         };
-        formPut("faceStyle", imageInfo);
         canvasCtxPut(imageInfo);
+        imageInfo.image.src = canvasElement.toDataURL("image/png");
+        formPut(section, imageInfo);
         camButtonDisabled = false;
       }
     };
@@ -156,24 +159,20 @@
     </Alert>
   {/if}
   {#if webcamSupported}
-    <div class="grid grid-cols-1 mt-2 items-center gap-4">
-      <div class="grid grid-cols-2 place-content-between gap-4 h-full">
-        <div class="grid">
-          <div></div>
-          <div>
-            {#if camButtonDisabled}
-              <GradientButton outline color="greenToBlue">
-                <Spinner class="me-3" size="4" color="white" />
-                Styling...
-              </GradientButton>
-            {:else}
-              <GradientButton outline color="greenToBlue" on:click={enableCam}>
-                {webcamButtonText}
-              </GradientButton>
-            {/if}
-          </div>
-        </div>
-        <div class="grow">
+    {#if camButtonDisabled}
+      <Button outline color="light">
+        <Spinner class="me-3" size="4" color="light" />
+        Styling...
+      </Button>
+    {:else}
+      <Button outline color="light" on:click={enableCam}>
+        {webcamButtonText}
+      </Button>
+    {/if}
+    <div class="grid grid-cols-2 place-content-between mt-4 gap-4 h-full">
+      <div class="grid">
+        <div></div>
+        <div>
           <video width="256" he bind:this={video} autoplay playsinline>
             <track kind="captions" />
           </video>

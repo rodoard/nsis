@@ -3,5 +3,5 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [sveltekit()],
-  assetsInclude: ['**/*.task'],
+  assetsInclude: ['**/*.task', "**/*.tflite"],
 });
