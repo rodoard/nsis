@@ -1,14 +1,14 @@
 
 # NSIS: No System Is Safe
-
+AI-powered Multi pass through authentication system
+that allows multiple ways to authenticate using facial recognition and hand gestures, a primary and secondary way, where the secondary can be configured to trigger some kind of protocol in the background; in the demo we use 911 protocol
 
 ## Prerequisites
 
 To run this project, make sure you have the following installed:
 
 - [SvelteKit](https://kit.svelte.dev/)
-- [OpenAI API](https://beta.openai.com/docs/guides/quickstart)
-- [Vercel AI SDK](https://vercel.com/docs/ai)
+- Python 3.7.9
 
 ## Getting Started
 
@@ -16,7 +16,7 @@ To run this project, make sure you have the following installed:
 
 
 ```
-git clone https://github.com/rodoard/ai-painting-creator-description-generator.git
+git clone https://github.com/rodoard/nsis.git
 ```
 
 2. Install dependencies:
@@ -24,6 +24,7 @@ git clone https://github.com/rodoard/ai-painting-creator-description-generator.g
 
 ```
 npm install
+pip install sklearn.metrics.pairwise, tensorflow
 ```
 
 3. Set up environment variables:
