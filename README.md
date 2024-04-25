@@ -3,6 +3,12 @@
 AI-powered Multi pass through authentication system
 that allows multiple ways to authenticate using facial recognition and hand gestures, a primary and secondary way, where the secondary can be configured to trigger some kind of protocol in the background; in the demo we use 911 protocol
 
+## LLMs used
+
+1. Face Recognizer (web)
+2. Gesture Recognizer (web)
+3. Image Similarity (python backend)
+
 ## Prerequisites
 
 To run this project, make sure you have the following installed:
