@@ -31,7 +31,6 @@ export async function POST(event) {
     error(400, "Failed to process challenge.")
   }
 
-  console.log('out', stdout)
   return json({
     score: Number(stdout)
   });
