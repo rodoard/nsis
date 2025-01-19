@@ -1,18 +1,28 @@
 import defaultUser from "./defaultUser"
+import lz from "lz-string"
+import sa from "serialize-anything"
 
 function users() {
-  return window.localStorage.getItem('users') || {
-    [`${defaultUser.profile.username}`]: {
-      ...defaultUser
+  let existing = window.localStorage.getItem('users')
+  if (!existing) {
+    return {
+      [`${defaultUser.profile.username}`]: {
+        ...defaultUser
+      }
     }
   }
+  const decompressed = sa.deserialize(lz.decompress(existing))
+  console.log('parse ', decompressed, "<<< parsed???")
+  return decompressed
 }
 
 function saveUser(user) {
-  window.localStorage.setItem("users", {
-    ...users(),
-    [`${username}`]: user
+  console.log('save user', {
+    [`${user.profile.username}`]: user
   })
+  window.localStorage.setItem("users", lz.compress(sa.serialize({
+    [`${user.profile.username}`]: user
+  })))
 }
 
 function getUser(username) {

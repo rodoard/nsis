@@ -6,7 +6,6 @@
   import PostUserChallenge from "./authorize/PostUserChallenge.svelte";
   import { goto } from "$app/navigation";
   import { getContext } from "svelte";
-  import { error } from "@sveltejs/kit";
 
   export let authorize, closeAuthorize;
 
@@ -23,20 +22,17 @@
     username: UserNameChallenge,
     postuser: PostUserChallenge,
   };
-  function challengeResult(result) {
+  async function challengeResult(result) {
     authorized = result.authorized;
     if (authorized) {
       userStore.set(user);
       if (result.mode.secure) {
-        goto("/911");
-        window.location = "/911";
+       await  goto("/911");
       } else {
-        goto("/sunshine");
-        window.location = "/sunshine";
+       await goto("/sunshine");
       }
     } else {
-      goto("/access-denied");
-      window.location = "/access-denied";
+      await goto("/access-denied");
     }
   }
 

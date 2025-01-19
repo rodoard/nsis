@@ -5,6 +5,7 @@
   import SignupModal from "../lib/components/SignupModal.svelte";
   import { goto } from "$app/navigation";
   import Authorize from "../lib/components/Authorize.svelte";
+  import {saveUser} from "$lib/stores/users"
 
   const user = getContext("user");
   let isLoggedIn = $user !== null;
@@ -13,8 +14,12 @@
     signup = show;
   };
   const submitSignup = async (userObj) => {
-    user.set(userObj);
-    await goto("/", { invalidateAll: true, replaceState: true });
+    saveUser(userObj)
+    console.log('set user ', userObj)
+    await goto("/")
+    showSignup(false);
+    console.log('signup done')
+
   };
   let authorize = false;
   const closeAuthorize = () => (authorize = false);

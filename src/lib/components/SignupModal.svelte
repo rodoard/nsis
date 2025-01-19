@@ -3,6 +3,7 @@
   import { Listgroup, Label, ListgroupItem } from "flowbite-svelte";
   import sectionComponent from "./signup/sections/index.js";
   import CompleteSteps from "./signup/sections/CompleteSteps.svelte";
+  import {imageDataToDataUrl} from "$lib/utils"
 
   export let showSignup, signup, submitSignup;
 
@@ -48,6 +49,7 @@
   let currentSection;
   const setSection = (index) => {
     currentSectionIndex = index;
+    if (index > lastSectionIndex) return
     currentSection = sections[currentSectionIndex].label;
   };
   const sectionChanged = (label) => {
@@ -63,7 +65,7 @@
 
   const formNext = () => {
     form[currentSection]?.inProgress &&
-      currentSectionIndex < lastSectionIndex &&
+      currentSectionIndex <= lastSectionIndex &&
       setSection(currentSectionIndex + 1);
   };
 
@@ -87,6 +89,15 @@
     submitting = true;
     delete hand_gesture.results;
     delete secure_gesture.results;
+    const convertImageData = [face_stylization, hand_gesture, secure_gesture]
+    convertImageData.forEach(elem=>{
+      console.log(elem)
+      if ("data" in elem.image) {
+       delete elem.image.data; 
+       //= imageDataToDataUrl(elem.image.data)
+      }
+    })
+    face_stylization.data = imageDataToDataUrl
     setTimeout(async () => {
       await submitSignup({
         profile,
@@ -160,7 +171,7 @@
           outline
           color="light"
           on:click={formNext}
-          disabled={currentSectionIndex > lastSectionIndex ||
+          disabled={allSectionsCompleted || currentSectionIndex > lastSectionIndex ||
             (currentSectionIndex <= lastSectionIndex && !form[currentSection])
               ?.inProgress}>Next</Button
         >

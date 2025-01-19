@@ -23,13 +23,9 @@
 
 <div class="app">
   <Navbar {signOut} />
-  {#if isHome}
-    <Header {setHeaderDone} />
-  {/if}
+ 
   <main>
-    {#if headerDone || !isHome}
       <slot />
-    {/if}
   </main>
   <footer>
     <p class="text-sm">Encode AI BootCamp</p>

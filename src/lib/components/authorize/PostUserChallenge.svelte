@@ -79,13 +79,15 @@
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
-  async function toBlob(image) {
+  async function toBlob(image,{
+    width, height
+  }) {
     // Create a canvas element
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     // Set canvas dimensions to match image dimensions
-    canvas.width = image.width;
-    canvas.height = image.height;
+    canvas.width = width;
+    canvas.height = height;
     image.crossOrigin = "anonymous";
     // Draw the image onto the canvas
     ctx.drawImage(image, 0, 0);
@@ -112,22 +114,28 @@
 
   const solvePostNameChallenge = async () => {
     solvingPostChallenge = true;
+    const {width, height} = expected.faceStyle
     const faceResult = await postNameChallenge(
-      await toBlob(expected.faceStyle),
-      await toBlob(selectedFace),
+      await toBlob(expected.faceStyle, {width, height}),
+      await toBlob(selectedFace,{width, height}),
     );
     let matchedGesture = null;
+    let matchedScore = 0;
     if (Number(faceResult.score) >= THRESHOLD_SIMILARITY) {
       const testGestures = ["handGesture", "secureGesture"];
       for (let i = 0; i < testGestures.length; i++) {
-        const gesture = testGestures[i];
-        const result = await postNameChallenge(
-          await toBlob(expected[gesture]),
-          await toBlob(selectedGesture),
+        const gestureType = testGestures[i];
+          const {width, height} = expected[gestureType]
+          const result = await postNameChallenge(
+          await toBlob(expected[gestureType], {width, height}),
+          await toBlob(selectedGesture, {width, height}),
         );
-        if (Number(result.score) >= THRESHOLD_SIMILARITY) {
-          matchedGesture = gesture;
-          break;
+        const score = Number(result.score)
+        if (score >= THRESHOLD_SIMILARITY) {
+          if (score > matchedScore) {
+            matchedGesture = gestureType;
+            matchedScore = score 
+          }
         }
       }
     }

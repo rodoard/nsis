@@ -29,13 +29,21 @@ git clone https://github.com/rodoard/nsis.git
 
 
 ```
+cd nsis
 npm install
-pip install sklearn.metrics.pairwise, tensorflow
+python -m venv 
+venv/bin/activate
+pip install sklearn.metrics.pairwise tensorflow-cpu pillow
+yarn dev #from venv environment 
 ```
 
 3. Set up environment variables:
 
 Create a .env file in the project root and add the following:
+
+```
+OPENAI_API_KEY=xxxxxxx
+```
 
 4. Start the development server:
 
